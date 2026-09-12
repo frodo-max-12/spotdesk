@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SpotDesk — {{ company }}</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  /* Light theme, deliberately spare. */
+  :root { --ink:#1a2233; --muted:#6b7280; --line:#e5e7eb; --accent:#0d47a1;
+          --ok:#2e7d32; --warn:#b26a00; --bad:#c62828; --bg:#f8fafc; --card:#ffffff; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:14px/1.45 -apple-system,"Segoe UI",Arial,sans-serif;
+         color:var(--ink); background:var(--bg); }
+  header { display:flex; align-items:baseline; gap:14px; padding:14px 22px;
+           background:var(--card); border-bottom:1px solid var(--line); }
+  header h1 { font-size:17px; margin:0; }
+  header .mode { font-size:12px; padding:2px 8px; border-radius:10px;
+                 background:{% if mode == 'automatic' %}#e8f7e9{% else %}#fff8e1{% endif %};
+                 color:{% if mode == 'automatic' %}var(--ok){% else %}var(--warn){% endif %}; }
+  header .spacer { flex:1; }
+  header .stat { color:var(--muted); font-size:13px; }
+  main { padding:18px 22px; max-width:1500px; margin:0 auto; }
+  h2 { font-size:14px; text-transform:uppercase; letter-spacing:.04em;
+       color:var(--muted); margin:22px 0 10px; }
+  .cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:12px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:12px 14px; }
+  .card h3 { margin:0 0 8px; font-size:13px; color:var(--accent); }
+  .deal { padding:6px 0; border-top:1px solid var(--line); font-size:13px; }
+  .deal:first-of-type { border-top:none; }
+  .deal a { color:var(--accent); text-decoration:none; }
+  .deal .who { color:var(--muted); }
+  table { width:100%; border-collapse:collapse; background:var(--card);
+          border:1px solid var(--line); border-radius:8px; overflow:hidden; }
+  th, td { text-align:left; padding:8px 12px; border-bottom:1px solid var(--line); font-size:13px; }
+  th { background:#f1f5f9; color:var(--muted); font-weight:600; }
+  tr:last-child td { border-bottom:none; }
+  .kind { display:inline-block; padding:1px 7px; border-radius:9px; font-size:11px;
+          background:#eef2ff; color:var(--accent); }
+  .btn { display:inline-block; padding:4px 10px; border:1px solid var(--accent);
+         border-radius:6px; background:var(--card); color:var(--accent); font-size:12px;
+         cursor:pointer; }
+  .btn:hover { background:var(--accent); color:#fff; }
+  .breaker-ok { color:var(--ok); } .breaker-bad { color:var(--bad); font-weight:600; }
+  .close-form { display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-top:4px; }
+  .close-form select,.close-form input { font-size:12px; padding:3px 6px;
+        border:1px solid var(--line); border-radius:5px; }
+  footer { padding:18px 22px; color:var(--muted); font-size:12px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>SpotDesk</h1>
+  <span class="mode">{{ mode }}</span>
+  <span class="spacer"></span>
+  <span class="stat">deals won: {{ won.n or 0 }} (${{ '%.0f'|format(won.rev or 0) }})</span>
+  <span class="stat">drafts pending: {{ health.drafts_pending }}</span>
+  <span class="stat">
+    {% for name, b in breakers.items() %}
+      <span class="{{ 'breaker-ok' if b.ok else 'breaker-bad' }}"
+            title="{{ b.reason }}">{{ name }}{{ '' if b.ok else ' HALT' }}</span>{{ ' · ' if not loop.last }}
+    {% endfor %}
+  </span>
+</header>
+<main>
+
+<h2>Pending drafts — review in Gmail, or release as-is</h2>
+{% if pending %}
+<table>
+  <tr><th>Kind</th><th>To</th><th>Subject</th><th>Note</th><th>Created</th><th></th></tr>
+  {% for p in pending %}
+  <tr>
+    <td><span class="kind">{{ p.kind }}</span></td>
+    <td>{{ p.to_email }}</td>
+    <td><a href="{{ p.gmail_url }}" target="_blank" rel="noopener">{{ (p.subject or '')[:70] }}</a></td>
+    <td style="color:var(--muted)">{{ (p.note or '')[:80] }}</td>
+    <td style="color:var(--muted)">{{ (p.created_at or '')[:16] }}</td>
+    <td>
+      <form method="post" action="/action/{{ p.id }}/release" style="margin:0">
+        <button class="btn" type="submit"
+                onclick="return confirm('Send this draft exactly as it currently reads in Gmail?')">
+          Release</button>
+      </form>
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}<p style="color:var(--muted)">Nothing waiting — the Drafts folder is clear.</p>{% endif %}
+
+<h2>Pipeline</h2>
+<div class="cards">
+  {% for stage in stages %}
+  <div class="card">
+    <h3>{{ stage.label }} ({{ stage.deals|length }})</h3>
+    {% for d in stage.deals %}
+    <div class="deal">
+      <a href="{{ d.gmail_url }}" target="_blank" rel="noopener">{{ d.quote_number }}</a>
+      <span class="who">— {{ d.customer_company or d.customer_email }}</span>
+      {% if d.total_amount %}<span class="who">· ${{ '%.0f'|format(d.total_amount) }}</span>{% endif %}
+      {% if stage.status in ('sent','follow_up','negotiation') %}
+      <form class="close-form" method="post" action="/deal/{{ d.id }}/close">
+        <select name="outcome">
+          <option value="won">won</option><option value="lost">lost</option>
+          <option value="no_response">no response</option>
+          <option value="abandoned">abandoned</option>
+        </select>
+        <input name="clearing" placeholder="clearing $" size="8">
+        <input name="reason" placeholder="reason" size="12">
+        <button class="btn" type="submit">Close</button>
+      </form>
+      {% endif %}
+    </div>
+    {% else %}<div class="deal" style="color:var(--muted)">—</div>{% endfor %}
+  </div>
+  {% endfor %}
+</div>
+
+</main>
+<footer>SpotDesk · every send is a human decision · breakers, gates and the audit log are always on</footer>
+</body>
+</html>

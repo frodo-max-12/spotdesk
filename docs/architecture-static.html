@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- Source for docs/architecture.png (the README hero image).
+     Regenerate after edits:
+     "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new \
+       --disable-gpu --hide-scrollbars --force-device-scale-factor=2 \
+       --window-size=1600,1210 --screenshot=docs/architecture.png \
+       "file://$(pwd)/docs/architecture-static.html"
+     The interactive companion (click boxes, overlays) is docs/architecture.html. -->
+<head>
+<meta charset="utf-8">
+<title>SpotDesk — architecture (static)</title>
+<style>
+  :root {
+    --ink:#16213a; --muted:#5b6474; --line:#dfe4ec; --bg:#f7f9fc; --card:#ffffff;
+    --blue:#0d47a1; --blue-soft:#e8effb; --green:#2e7d32; --green-soft:#e8f5e9;
+    --amber:#b26a00; --red:#c62828; --purple:#6a3fb5; --teal:#00695c;
+  }
+  * { box-sizing:border-box; margin:0; }
+  html, body { width:1600px; background:var(--bg); }
+  body { font:15px/1.45 -apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+         color:var(--ink); padding:34px 44px 30px; }
+
+  /* header */
+  .head { display:flex; align-items:flex-end; justify-content:space-between; gap:30px; }
+  .head h1 { font-size:34px; letter-spacing:-.02em; }
+  .head h1 span { color:var(--blue); }
+  .head .tag { font-size:16.5px; color:var(--muted); margin-top:4px; }
+  .contract { max-width:560px; font-size:14.5px; background:var(--green-soft);
+      border:1px solid #cde8cf; border-left:4px solid var(--green); border-radius:10px;
+      padding:10px 16px; color:#1d4220; }
+  .ribbon { margin:20px 0 22px; background:var(--card); border:1px solid var(--line);
+      border-radius:12px; padding:10px 18px; font-size:15px; color:var(--muted);
+      display:flex; gap:9px; align-items:center; flex-wrap:wrap; }
+  .ribbon b { color:var(--blue); font-weight:600; }
+  .ribbon .sep { color:#9aa7bd; }
+
+  /* lanes */
+  .lane { border:1.5px dashed var(--line); border-radius:14px; background:var(--card);
+          padding:20px 18px 16px; position:relative; margin-bottom:16px; }
+  .lanelabel { position:absolute; top:-10px; left:16px; background:var(--bg);
+      padding:0 10px; font-size:12px; font-weight:700; letter-spacing:.09em;
+      text-transform:uppercase; color:var(--muted); }
+  .row { display:flex; gap:12px; align-items:stretch; }
+  .row + .row { margin-top:12px; }
+  .stage { position:relative; flex:1; border:1.5px solid var(--line); border-radius:11px;
+           padding:13px 14px 11px; background:var(--card); }
+  .stage .num { position:absolute; top:-11px; left:11px; min-width:22px; height:22px;
+      padding:0 5px; border-radius:11px; background:var(--blue); color:#fff;
+      font-size:12px; font-weight:700; display:flex; align-items:center;
+      justify-content:center; }
+  .stage h3 { font-size:15px; margin-bottom:4px; }
+  .stage p { font-size:12.5px; color:var(--muted); }
+  .stage .mod { display:block; font-family:ui-monospace,Menlo,monospace; font-size:10.5px;
+      color:var(--blue); margin-top:7px; opacity:.85; }
+  .arrow { align-self:center; color:#9aa7bd; font-size:20px; flex:0 0 auto; }
+  .grow   { border-top:3px solid var(--teal); }
+  .deal   { border-top:3px solid var(--blue); }
+  .learn  { border-top:3px solid var(--purple); }
+  .hitl   { border-top:3px solid var(--green); }
+  .safety { border-top:3px solid var(--red); }
+  .know   { border-top:3px solid var(--amber); }
+  .grow  .num { background:var(--teal); }
+  .learn .num { background:var(--purple); }
+  .hitl  .num { background:var(--green); }
+  .safety .num{ background:var(--red); }
+  .know  .num { background:var(--amber); }
+
+  /* strips */
+  .strips { display:grid; grid-template-columns:1.15fr 1.25fr 1fr; gap:14px; }
+  .strip { border:1px solid var(--line); border-radius:12px; background:var(--card);
+           padding:14px 18px 12px; }
+  .strip h3 { font-size:12px; text-transform:uppercase; letter-spacing:.08em;
+              color:var(--muted); margin-bottom:8px; }
+  .strip ul { padding-left:17px; font-size:13px; }
+  .strip li { margin-bottom:5px; }
+  .loop { display:flex; align-items:center; gap:7px; flex-wrap:wrap; font-size:13px;
+          margin-bottom:8px; }
+  .loop .step { background:#f1eafc; color:var(--purple); border-radius:8px;
+                padding:3px 10px; font-weight:600; }
+  .items { display:flex; flex-wrap:wrap; gap:7px; }
+  .pill { font-size:12.5px; border:1px solid var(--line); border-radius:8px;
+          padding:4px 11px; background:var(--bg); }
+  .foot { text-align:center; color:#8b94a5; font-size:12px; margin-top:18px; }
+</style>
+</head>
+<body>
+
+<div class="head">
+  <div>
+    <h1>Spot<span>Desk</span></h1>
+    <div class="tag">A fully autonomous AI agent for a semiconductor spot-trading desk</div>
+  </div>
+  <div class="contract"><strong>The human contract:</strong> the agent does all the
+  work 24/7, but every outbound email is born as a <strong>Gmail draft</strong> on the
+  right thread — a person reviews it and presses <strong>Send</strong>.</div>
+</div>
+
+<div class="ribbon">
+  <b>Grow</b><span class="sep">→</span><b>Intake</b><span class="sep">→</span>
+  <b>Market check</b><span class="sep">→</span><b>Source</b><span class="sep">→</span>
+  <b>Price</b><span class="sep">→</span><b>Quote</b><span class="sep">→</span>
+  <b>Negotiate</b><span class="sep">→</span><b>Order</b><span class="sep">→</span>
+  <b>Logistics</b><span class="sep">→</span><b>Learn</b>
+  <span style="margin-left:auto">one inbox in, one delivered order out</span>
+</div>
+
+<div class="lane">
+  <div class="lanelabel">Grow — the desk finds its own demand</div>
+  <div class="row">
+    <div class="stage grow"><span class="num">0</span>
+      <h3>Cold outreach engine</h3>
+      <p>Per-company SKU subsets (anti-forwarding) · jittered pacing · volume ramp ·
+         suppression + per-campaign ledger · proof-send required before any bulk send</p>
+      <span class="mod">outreach/campaign.py · offers.py</span></div>
+    <div class="arrow">→</div>
+    <div class="stage grow"><span class="num">0b</span>
+      <h3>Threaded follow-ups</h3>
+      <p>Weekly bump on owned threads (same subject, proper In-Reply-To) with a rotated
+         stock list · bounced / replied / opted-out always excluded</p>
+      <span class="mod">outreach/followups.py</span></div>
+    <div class="arrow">→</div>
+    <div class="stage grow"><span class="num">↳</span>
+      <h3>Replies become inquiries</h3>
+      <p>"What's your price on the DDR5?" is an RFQ — it flows straight into stage 1
+         and the contact is never cold-bumped again</p>
+      <span class="mod">joins the pipeline ↓</span></div>
+  </div>
+</div>
+
+<div class="lane">
+  <div class="lanelabel">Deal pipeline — one deal, nine stages</div>
+  <div class="row">
+    <div class="stage deal"><span class="num">1</span>
+      <h3>Intake</h3>
+      <p>Classify the mail · extract the BOM from text, HTML tables, xlsx/xls, CSV, PDF ·
+         capture the lead · resume safely after any crash</p>
+      <span class="mod">pipeline/intake.py · bom.py</span></div>
+    <div class="arrow">→</div>
+    <div class="stage deal"><span class="num">2</span>
+      <h3>Market check</h3>
+      <p>Mouser + DigiKey set the price ceiling · aggregator scrape finds broker
+         channels · own price memory recalls who offered this part before</p>
+      <span class="mod">market/lookup.py</span></div>
+    <div class="arrow">→</div>
+    <div class="stage deal"><span class="num">3</span>
+      <h3>Source</h3>
+      <p>Fan a firm-enquiry RFQ to trust-ranked brokers · read replies until every part
+         is priced · learn each vendor's team from their CCs</p>
+      <span class="mod">pipeline/sourcing.py</span></div>
+    <div class="arrow">→</div>
+    <div class="stage deal"><span class="num">4</span>
+      <h3>Price</h3>
+      <p>Cheapest safe buy: AI proposes lots, code validates · split held for review ·
+         margin engine with a landed-cost floor — below-cost quotes are impossible</p>
+      <span class="mod">pipeline/pricing.py</span></div>
+    <div class="arrow">→</div>
+    <div class="stage deal"><span class="num">5</span>
+      <h3>Quote</h3>
+      <p>Code-built quote table (the LLM never touches a price) · confidence gate lists
+         every reason a human must look · drafted on the customer's thread</p>
+      <span class="mod">pipeline/quoting.py</span></div>
+  </div>
+  <div class="row">
+    <div class="stage deal"><span class="num">6</span>
+      <h3>Negotiate</h3>
+      <p>Meet the target by trimming margin to the floor, or re-ask vendors a capped %
+         off their own cost — the customer's target never leaks</p>
+      <span class="mod">pipeline/negotiation.py</span></div>
+    <div class="arrow">→</div>
+    <div class="stage deal"><span class="num">7</span>
+      <h3>Order</h3>
+      <p>Customer PO → expired-quote guard → one PO drafted per winning vendor ·
+         confirmations, declines and dispatches tracked from their replies</p>
+      <span class="mod">pipeline/orders.py</span></div>
+    <div class="arrow">→</div>
+    <div class="stage deal"><span class="num">8</span>
+      <h3>Logistics</h3>
+      <p>Dispatched → in transit → customs → delivered, advanced by reading courier
+         and vendor mail · customer shipping updates drafted on the way</p>
+      <span class="mod">pipeline/logistics.py</span></div>
+    <div class="arrow">→</div>
+    <div class="stage learn"><span class="num">9</span>
+      <h3>Learn</h3>
+      <p>Outcome labels (silence is censored, never a loss) → counterparty trust →
+         vendor scorecard → weekly distill report · a case study per closed deal</p>
+      <span class="mod">learn/*</span></div>
+  </div>
+</div>
+
+<div class="lane">
+  <div class="lanelabel">Rails — every stage passes through these</div>
+  <div class="row">
+    <div class="stage hitl"><span class="num">✓</span>
+      <h3>Drafts-first HITL</h3>
+      <p>Every outbound = a Gmail draft; stale drafts replaced on re-price, so Drafts
+         always holds the current answer</p>
+      <span class="mod">hitl/drafts.py + Gmail</span></div>
+    <div class="stage safety"><span class="num">⛨</span>
+      <h3>Gates &amp; breakers</h3>
+      <p>Confidence gate · margin floor · BIS/OFAC + dual-use screening · send caps ·
+         bounce halt · price-anomaly bands</p>
+      <span class="mod">ops/breakers.py · compliance.py</span></div>
+    <div class="stage know"><span class="num">✎</span>
+      <h3>Playbooks &amp; line card</h3>
+      <p>Trading doctrine as git-versioned markdown, re-read on every decision —
+         edit prose, change behaviour</p>
+      <span class="mod">knowledge/playbooks/*.md</span></div>
+    <div class="stage deal"><span class="num">◎</span>
+      <h3>LLM brain</h3>
+      <p>One prompt per task · the model judges, the code computes every number ·
+         Anthropic API (CLI backend for dev)</p>
+      <span class="mod">llm/brain.py · backend.py</span></div>
+    <div class="stage learn"><span class="num">☰</span>
+      <h3>desk.db + audit</h3>
+      <p>One SQLite source of truth · decision-time snapshots on every quote ·
+         every action logged</p>
+      <span class="mod">db.py · schema.sql</span></div>
+    <div class="stage hitl"><span class="num">▦</span>
+      <h3>Minimal dashboard</h3>
+      <p>Pipeline board with deep links into Gmail · two buttons: Release and Close ·
+         Gmail is the workspace</p>
+      <span class="mod">dashboard/app.py</span></div>
+  </div>
+</div>
+
+<div class="strips">
+  <div class="strip">
+    <h3>The human's whole job</h3>
+    <ul>
+      <li>Open Gmail Drafts — review, edit if needed, press <strong>Send</strong>.</li>
+      <li><strong>Release</strong> a reviewed RFQ batch in one click.</li>
+      <li><strong>Close</strong> a finished deal: won / lost / no-response.</li>
+    </ul>
+  </div>
+  <div class="strip">
+    <h3>The compounding loop</h3>
+    <div class="loop">
+      <span class="step">Capture</span>→<span class="step">Apply</span>→
+      <span class="step">Feedback</span>→<span class="step">Distill</span>
+    </div>
+    <ul>
+      <li>Every quote stores its decision snapshot; every close updates trust and the
+          price memory in the same action.</li>
+      <li>Better trust → better routing → better quotes → better labels.</li>
+    </ul>
+  </div>
+  <div class="strip">
+    <h3>Stack</h3>
+    <div class="items">
+      <span class="pill">Python 3.11+</span><span class="pill">Gmail API</span>
+      <span class="pill">Anthropic API</span><span class="pill">SQLite</span>
+      <span class="pill">FastAPI</span><span class="pill">Mouser · DigiKey</span>
+      <span class="pill">systemd / cron</span>
+    </div>
+  </div>
+</div>
+
+<div class="foot">SpotDesk · interactive version with module-level detail: docs/architecture.html</div>
+
+</body>
+</html>

@@ -1,0 +1,30 @@
+# Secrets / credentials — never committed
+.env
+config/credentials.json
+config/token*.json
+*.key
+*_api_key
+credentials/
+
+# Data — the desk's live state stays local
+data/
+*.db
+*.db-wal
+*.db-shm
+*.db-journal
+
+# Deal case studies contain counterparty pricing — local only
+deals/*.md
+!deals/TEMPLATE.md
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/

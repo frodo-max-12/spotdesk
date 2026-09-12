@@ -1,0 +1,22 @@
+# systemd unit — 24/7 unattended operation on a Linux VPS.
+#   sudo cp deploy/spotdesk.service /etc/systemd/system/spotdesk.service
+#   sudo systemctl daemon-reload && sudo systemctl enable --now spotdesk
+[Unit]
+Description=SpotDesk — autonomous semiconductor trading desk agent
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=desk
+WorkingDirectory=/home/<USER>/spotdesk
+EnvironmentFile=-/home/<USER>/spotdesk/deploy/spotdesk.env
+ExecStart=/home/<USER>/spotdesk/.venv/bin/python main.py
+Restart=always
+RestartSec=15
+# The agent writes only inside its own tree.
+ProtectSystem=full
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target
